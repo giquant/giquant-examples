@@ -1,0 +1,13 @@
+export TSLINFILES="/var/www/data"
+export TSLDBFOLDER="/var/www/tsldb"
+export TSLDBNAME="tsldb"
+export TSLBACKEND="duckdb"
+export TSLTMPFOLDER="/tmp/tsl"
+export COTFOLDER="/var/www/data"
+
+# cot.sh
+export TMPFOLDER="/tmp/cot"
+export FROM_YEAR=2010
+export TO_YEAR=2024
+export DA_OUTFILE="dacot"
+export LEGACY_OUTFILE="deacot"
