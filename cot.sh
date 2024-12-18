@@ -18,10 +18,6 @@ set -euo pipefail
 [[ -z "${LEGACY_OUTFILE}" ]] && echo -e "\nERROR: Environment variable LEGACY_OUTFILE is not set!\n" && exit 1
 
 
-#pwd=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-#SRC=$pwd/../src/trade
-#SRC2=$pwd/../src/tsl
-
 
 # Donwload files from CFTC
 # =======================
@@ -29,7 +25,7 @@ set -euo pipefail
 read -p "Download COT data? (Y/N): " confirm
 
 if [[ "$confirm" == "Y" ]]; then
-  python3 -m trade.dwnl cot $COTFOLDER
+  python3 -m giquant.trade.dwnl cot $COTFOLDER
 fi
 
 
@@ -147,7 +143,7 @@ for i in $(seq $FROM_YEAR $TO_YEAR); do
 done
 
 echo "input files:$FILES"
-python3 -m tsl.create --YearWeek --no-use_ffill --date_format '%y%m%d' \
+python3 -m giquant.tsl.create --YearWeek --no-use_ffill --date_format '%y%m%d' \
 			 --save_summary disagg --backends $TSLBACKEND --dbname $TSLDBNAME \
                          --col_names OpenInterest,ProdMerc_Long,ProdMerc_Short,Swap_Long,Swap_Short,MMoney_Long,MMoney_Short,OtherRept_Long,OtherRept_Short,NonRept_Short,NonRept_Long\
 			 $TSLDBFOLDER \
@@ -216,7 +212,7 @@ for i in $(seq $FROM_YEAR $TO_YEAR); do
 done
 
 echo "input files:$FILES"
-python3 -m tsl.create --YearWeek --no-use_ffill --date_format '%y%m%d' \
+python3 -m giquant.tsl.create --YearWeek --no-use_ffill --date_format '%y%m%d' \
 			 --save_summary fin --backends $TSLBACKEND --dbname $TSLDBNAME \
                          --col_names OpenInterest,Dealer_Long,Dealer_Short,AssetMgr_Long,AssetMgr_Short,LevMoney_Long,LevMoney_Short,OtherRept_Long,OtherRept_Short,NonRept_Long,NonRept_Short \
 			 $TSLDBFOLDER \
@@ -230,11 +226,11 @@ python3 -m tsl.create --YearWeek --no-use_ffill --date_format '%y%m%d' \
 # Merge disagg and fin and add _Net column
 # ----------------------------------------
 
-python3 -m tsl.merge $TSLDBFOLDER ${DA_OUTFILE}_da ${DA_OUTFILE}_fin ${DA_OUTFILE} --index YearWeek --no-cmp-tickers --backend $TSLBACKEND --dbname $TSLDBNAME
+python3 -m giquant.tsl.merge $TSLDBFOLDER ${DA_OUTFILE}_da ${DA_OUTFILE}_fin ${DA_OUTFILE} --index YearWeek --no-cmp-tickers --backend $TSLBACKEND --dbname $TSLDBNAME
 
 arg="VMMoney_Net=VMMoney_Long-VMMoney_Short; VNonRept_Net=VNonRept_Long-VNonRept_Short; VOtherRept_Net=VOtherRept_Long-VOtherRept_Short; VProdMerc_Net=VProdMerc_Long-VProdMerc_Short"
-arg="$arg; VSwap_Net=VSwap_Long-VSwap_Short;VAssetMgr_Net=VAssetMgr_Long-VAssetMgr_Short; VDealer_Net=VDealer_Long-VDealer_Short; VLevMoney_Net=VLevMoney_Long-VLevMoney_Short"   
-python3 -m tsl.expr "$arg" $TSLDBFOLDER $DA_OUTFILE $DA_OUTFILE --backend $TSLBACKEND --dbname $TSLDBNAME
+arg="$arg; VSwap_Net=VSwap_Long-VSwap_Short;VAssetMgr_Net=VAssetMgr_Long-VAssetMgr_Short; VDealer_Net=VDealer_Long-VDealer_Short; VLevMoney_Net=VLevMoney_Long-VLevMoney_Short;"
+python3 -m giquant.tsl.expr $TSLDBFOLDER $DA_OUTFILE $DA_OUTFILE "$arg" --backend $TSLBACKEND --dbname $TSLDBNAME
 
 
 # Legacy version
@@ -328,7 +324,7 @@ done
 
 
 echo "input files:$FILES"
-python3 -m tsl.create \
+python3 -m giquant.tsl.create \
                          --YearWeek --no-use_ffill --date_format '%y%m%d' \
 			 --save_summary dea --backends $TSLBACKEND --dbname $TSLDBNAME \
                          --col_names OpenInterest,NonComm_Long,NonComm_Short,Comm_Long,Comm_Short,NonRept_Long,NonRept_Short \
@@ -340,5 +336,5 @@ python3 -m tsl.create \
                          $LEGACY_OUTFILE
 
 
-arg="VComm_Net=VComm_Long-VComm_Short; VNonComm_Net=VNonComm_Long-VNonComm_Short; VNonRept_Net=VNonRept_Long-VNonRept_Short"
-python3 -m tsl.expr "$arg" $TSLDBFOLDER $LEGACY_OUTFILE $LEGACY_OUTFILE --backend $TSLBACKEND
+arg="VComm_Net=VComm_Long-VComm_Short; VNonComm_Net=VNonComm_Long-VNonComm_Short; VNonRept_Net=VNonRept_Long-VNonRept_Short;"
+python3 -m giquant.tsl.expr $TSLDBFOLDER $LEGACY_OUTFILE $LEGACY_OUTFILE "$arg" --backend $TSLBACKEND

@@ -1,0 +1,47 @@
+#~~~ pring_alloc:expr ~~~
+#
+# Some more comments
+#
+
+Fcalc_shares_alloc("alloc", 10000);
+Vendvalperiod = VClose * Vshares;
+Fagg_over_cols("np.sum", "^.*_endvalperiod", "ZTOT_endvalperiod");
+Vdrawdown = Fdrawdown(Vendvalperiod); Vlogendval = Flog(Vendvalperiod); Vreturn = Vlogendval$ - Flag_(Vlogendval$,1);
+Vstdret6 = Fstd(Vreturn,6); Vsharperatio = Fcummean(Vreturn) / Fcumstd(Vreturn);
+Vcummean = Fcummean(Vreturn); Vcumstd = Fcumstd(Vreturn);
+
+#~~~ pring_alloc:gg ~~~
+
+levels = Vticker , Vvar; line(pos(Dx=FI(VDate), Dy=FI(Vdrawdown)), aes(Dcolor=FI(Vticker)));
+line(pos(Dx=FI(VDate), Dy=FI(Vendvalperiod)), aes(Dcolor=FI(Vticker)));
+
+#~~~ pring_stoploss1:expr ~~~
+
+Vstartpos = 2 if (Vstoploss>0) else (1 if (Vstoploss<0) else 0);
+Vendpos = 0 if (((Vstartpos==2) and (VLow<Vstoploss)) or ((Vstartpos==1) and (VHigh>(-1)*Vstoploss))) else Vstartpos;
+
+#~~~ pring_stoploss2:expr ~~~
+# Endposendpos (Now Before) = 20 (Long Neutral), = 10 (Short Neutral), = 21 (Long Short), = 12 (Short Long) ;
+
+Vstartposendpos = Vstartpos$*10 + Vendpos$;
+Vlagendposstartpos = Fnan_to_num(Flag_(Vendpos$, 1))*10 + Vstartpos$;
+Vsigsl = 0;
+Vsigsl = -1 if (Vstartposendpos==20) else Vsigsl$;
+Vsigsl =  1 if (Vstartposendpos==10) else Vsigsl$;
+Vsig = 0;
+Vsig = (-1) if ((Vlagendposstartpos==20) or (Vlagendposstartpos==1)) else Vsig$;
+Vsig =   1  if ((Vlagendposstartpos==10) or (Vlagendposstartpos==2)) else Vsig$;
+Vsig = (-2) if (Vlagendposstartpos==21) else Vsig$;
+Vsig =   2  if (Vlagendposstartpos==12) else Vsig$;
+Vtranssl = Vsigsl * (-1) * Fabs(Vstoploss);
+Vtranssig = Vsig$ * (-1) * VOpen;
+Vtrans = Fnan_to_num(Vtranssl) + Fnan_to_num(Vtranssig);
+Vtranscs = Fcumsum(Vtrans$);
+Vcurrval = VClose if (Vendpos$==2) else ((-1)*VClose if (Vendpos$==1) else 0);
+Vtradeval = Vcurrval + Vtranscs$;
+Fagg_over_cols("np.sum", "^.*_trans$", "_TOT_trans");
+Fagg_over_cols("np.sum", "^.*_tradeval", "_TOT_tradeval");
+Fagg_over_cols("np.sum", "^.*_currval", "_TOT_currval");
+Fcalc_port_val(200, "_TOT_trans", "_PORT_currval");
+
+#~~~
