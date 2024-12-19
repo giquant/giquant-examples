@@ -1,6 +1,11 @@
 #
-# The path for the modules loaded needs to be in PYTHONPATH. For instance:
-# export PYTHONPATH="$PYTHONPATH:/var/www/siteX/server_modules"
+# Install giquant and run:
+# >pip3 install giquant
+# >python3 start.py
+#
+# Use a wsgi server in production:
+# >pip3 install gunicorn
+# >gunicorn -w 4 'start:app'
 #
 
 from giquant.tsl.server import create_app
